@@ -6,6 +6,7 @@ const notificationSchema = new Schema({
   title: { type: String, required: true },
   time: { type: Date, required: true },
   is_active: { type: Boolean, default: false },
+  user: { type: Schema.Types.ObjectId, ref: "User" },
   celebration: {type: Schema.Types.ObjectId, ref: 'Celebration'}
 });
 

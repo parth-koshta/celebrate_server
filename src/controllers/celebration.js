@@ -1,0 +1,1 @@
+const Celebration = require('../models/celebration');

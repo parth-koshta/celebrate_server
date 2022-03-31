@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwtHelpers = require("../helpers/jwt");
 const User = require("../models/user");
 const SaltRounds = 10;
 
@@ -23,6 +24,8 @@ userController.signup = async (req, res, next) => {
       password: hashPassword,
     });
     user = user.toObject();
+    const token = jwtHelpers.generateJWT(user);
+    user.token = token;
     delete user.password;
     return res.send(user);
   } catch (err) {
@@ -31,39 +34,49 @@ userController.signup = async (req, res, next) => {
   }
 };
 
-
 userController.login = async (req, res, next) => {
-    try {
-      const { email, phone, password } = req.body;
-      if (!email && !phone) {
-        return res
-          .status(400)
-          .send({ message: "Email or phone number is required." });
-      }
-      let user = await User.findOne({ $or: [{ email }, { phone }] }).select(
-        "+password"
-      );
-      if (!user) {
-        return res
-          .status(400)
-          .send({ message: "User doesn't exist. Please signup." });
-      }
-      if (!password) {
-        return res.status(400).send({ message: "Password is required." });
-      }
-      const validPass = await bcrypt.compare(password, user.password);
-      if (!validPass) {
-        return res
-          .status(400)
-          .send({ message: "Incorrect password. Please try again." });
-      }
-      user = user.toObject();
-      delete user.password;
-      return res.send(user);
-    } catch (err) {
-      console.log(err);
-      next(err);
+  try {
+    const { email, phone, password } = req.body;
+    if (!email && !phone) {
+      return res
+        .status(400)
+        .send({ message: "Email or phone number is required." });
     }
+    let user = await User.findOne({ $or: [{ email }, { phone }] })
+      .select("+password")
+      .lean();
+    if (!user) {
+      return res
+        .status(400)
+        .send({ message: "User doesn't exist. Please signup." });
+    }
+    if (!password) {
+      return res.status(400).send({ message: "Password is required." });
+    }
+    const validPass = await bcrypt.compare(password, user.password);
+    if (!validPass) {
+      return res
+        .status(400)
+        .send({ message: "Incorrect password. Please try again." });
+    }
+    user.token = jwtHelpers.generateJWT(user);
+    delete user.password;
+    return res.send(user);
+  } catch (err) {
+    console.log(err);
+    next(err);
   }
+};
 
-  module.exports = userController;
+userController.me = async (req, res, next) => {
+  try {
+    let user = await User.findOne({ _id: req.userId });
+    if (!user) res.status(401).send({ message: "User does not exist." });
+    res.send(user);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+module.exports = userController;

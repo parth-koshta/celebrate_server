@@ -9,6 +9,7 @@ const userSchema = new Schema({
   phone: { type: Number, required: true, index: { unique: true } },
   dob: { type: Date, default: null, required: true, index: { unique: false } },
   is_active: { type: Boolean, default: true },
+  fcm_token: { type: String },
 });
 
 userSchema.plugin(timestamps, {
