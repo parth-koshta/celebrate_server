@@ -71,8 +71,8 @@ userController.login = async (req, res, next) => {
 userController.me = async (req, res, next) => {
   try {
     let user = await User.findOne({ _id: req.userId });
-    if (!user) res.status(401).send({ message: "User does not exist." });
-    res.send(user);
+    if (!user) return res.status(401).send({ message: "User does not exist." });
+    return res.send(user);
   } catch (err) {
     console.log(err);
     next(err);
